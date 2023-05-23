@@ -8,7 +8,7 @@ use bit_field::BitField;
 /// https://www.crystalfontz.com/controllers/SolomonSystech/SSD1680/497/
 #[allow(dead_code)]
 #[derive(Copy, Clone)]
-pub(crate) enum Command {
+pub(crate) enum Reg {
     DriverOutputControl = 0x01,
     GateDrivingVoltageCtrl = 0x03,
     SourceDrivingVoltageCtrl = 0x04,
@@ -34,8 +34,8 @@ pub(crate) enum Command {
     DisplayUpdateControl1 = 0x21,
     DisplayUpdateControl2 = 0x22,
 
-    WriteRam = 0x24,
-    WriteRamRed = 0x26,
+    WriteRamA = 0x24,
+    WriteRamB = 0x26,
     ReadRam = 0x27,
 
     VcomSense = 0x28,
@@ -129,7 +129,7 @@ impl DisplayUpdateControl2 {
         self.0.set_bit(2, true);
         self
     }
-    
+
     pub fn display_mode2(mut self) -> Self {
         self.0.set_bit(3, true);
         self
@@ -198,10 +198,21 @@ pub(crate) enum BorderWaveFormGs {
     Lut3 = 0x3,
 }
 
+#[derive(Copy, Clone)]
 pub(crate) struct BorderWaveForm {
     pub vbd: BorderWaveFormVbd,
     pub fix_level: BorderWaveFormFixLevel,
     pub gs_trans: BorderWaveFormGs,
+}
+
+impl Default for BorderWaveForm {
+    fn default() -> Self {
+        Self {
+            vbd: BorderWaveFormVbd::Gs,
+            fix_level: BorderWaveFormFixLevel::Vss,
+            gs_trans: BorderWaveFormGs::Lut0,
+        }
+    }
 }
 
 impl BorderWaveForm {
@@ -293,7 +304,13 @@ impl I32Ext for i32 {
     }
 }
 
-impl traits::Command for Command {
+impl traits::Command for u8 {
+    fn address(self) -> u8 {
+        self
+    }
+}
+
+impl traits::Command for Reg {
     /// Returns the address of the command
     fn address(self) -> u8 {
         self as u8
